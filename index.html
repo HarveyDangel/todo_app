@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+   <title>Simple GraphQL To-Do App</title>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <style>
+      body {
+         font-family: Arial, sans-serif;
+         width: 100vw;
+         height: 100vh;
+         margin: auto;
+         max-width: 400px;
+         background-color: blanchedalmond;
+      }
+
+      h1 {
+         text-align: center;
+      }
+
+      form {
+         display: flex;
+         flex-direction: row;
+         align-items: center;
+         justify-content: space-between;
+
+         input {
+            flex: 1;
+            margin-right: 10px;
+         }
+      }
+
+      input,
+      button {
+         padding: 8px;
+         margin-top: 5px;
+      }
+
+      ul {
+         padding: 12px;
+         margin-bottom:12px;
+      }
+
+      li {
+         flex-direction: row;
+         display: flex;
+         justify-content: space-between;
+         margin-top: 5px;
+         list-style: none;
+         padding: 12px;
+         background-color: white;
+         box-shadow: 0 2px 2px rgba(0, 0, 0, 0.3);
+         border-radius: 4px;
+         margin-bottom:12px;
+      }
+
+      .done {
+         text-decoration: line-through;
+         color: gray;
+      }
+
+      .card {
+         padding: 12px;
+         background-color: white;
+         box-shadow: 0 2px 2px rgba(0, 0, 0, 0.3);
+         border-radius: 4px;
+         margin-bottom:12px;
+      }
+   </style>
+</head>
+
+<body>
+   <div class="card">
+      <h1>To-Do App</h1>
+      <form onsubmit="addTask(event)">
+         <input id="taskInput" placeholder="New task..." />
+         <button type="submit">Add</button>
+      </form>
+      <hr>
+      <ul id="taskList" class=""></ul>
+   </div>
+
+   <script>
+      const endpoint = "http://localhost/todo_app/index.php"; // Change path if needed
+
+      async function graphqlQuery(query, variables = {}) {
+         const res = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query, variables })
+         });
+         const json = await res.json();
+         return json.data;
+      }
+
+      async function loadTasks() {
+         const data = await graphqlQuery(`{ tasks { id title done } }`);
+         const list = document.getElementById("taskList");
+         list.innerHTML = "";
+         data.tasks.forEach(task => {
+            const li = document.createElement("li");
+            li.innerHTML = `<span class="${task.done ? 'done' : ''}" onclick="toggleTask(${task.id})">${task.title}</span>
+                        <button onclick="deleteTask(${task.id})">X</button>`;
+            list.appendChild(li);
+         });
+      }
+
+      async function addTask(e) {
+         e.preventDefault();
+         const title = document.getElementById("taskInput").value;
+         if (!title.trim()) return;
+         await graphqlQuery(`mutation($title:String!){ addTask(title:$title){ id title done } }`, { title });
+         document.getElementById("taskInput").value = "";
+         loadTasks();
+      }
+
+      async function deleteTask(id) {
+         await graphqlQuery(`mutation($id:Int!){ deleteTask(id:$id) }`, { id });
+         loadTasks();
+      }
+
+      async function toggleTask(id) {
+         await graphqlQuery(`mutation($id:Int!){ toggleTask(id:$id){ id title done } }`, { id });
+         loadTasks();
+      }
+
+      // Initial load
+      loadTasks();
+   </script>
+</body>
+
+</html>
