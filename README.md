@@ -48,6 +48,9 @@ This project demonstrates how to integrate GraphQL queries and mutations without
    
 ---
 
+## Screenshot
+   ![Home Page Screenshot](screenshot/screenshot.png)
+
 ## 📄 License
 MIT License.
 Feel free to modify and use for learning purposes.
